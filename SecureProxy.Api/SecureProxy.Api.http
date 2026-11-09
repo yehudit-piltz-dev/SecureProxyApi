@@ -1,0 +1,6 @@
+@SecureProxy.Api_HostAddress = http://localhost:5232
+
+GET {{SecureProxy.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
