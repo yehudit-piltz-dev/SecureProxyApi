@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Proxy + Mock upstream",
+    "Projects": [
+      {
+        "Path": "SecureProxy.MockUpstream\\SecureProxy.MockUpstream.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      },
+      {
+        "Path": "SecureProxy.Api\\SecureProxy.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      }
+    ]
+  }
+]

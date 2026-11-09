@@ -1,6 +1,83 @@
-@SecureProxy.Api_HostAddress = http://localhost:5232
+# Sample requests for Visual Studio / VS Code REST clients.
+# Start both SecureProxy.Api and SecureProxy.MockUpstream first (see README.md).
 
-GET {{SecureProxy.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+@proxy = http://localhost:5232/api/proxy/execute
 
-###
+### Valid request: forwarded to GET /customers/42?includeOrders=true
+# Accept-Language is allowlisted for this operation; X-Secret and Authorization are not, so they are dropped.
+POST {{proxy}}
+Content-Type: application/json
+Accept-Language: he
+X-Secret: should-not-be-forwarded
+Authorization: Bearer should-not-be-forwarded
+
+{ "clientId": "customer.get", "json": { "urlId": 42, "includeOrders": true } }
+
+### Query parameters are escaped: forwarded as ?name=Dan%20%26%20co&urlId=abc-1
+POST {{proxy}}
+Content-Type: application/json
+
+{ "clientId": "customer.search", "json": { "urlId": "abc-1", "name": "Dan & co" } }
+
+### Rejected: unknown operation (404)
+POST {{proxy}}
+Content-Type: application/json
+
+{ "clientId": "customer.delete", "json": { "urlId": 1 } }
+
+### Rejected: the caller tries to choose the destination (400 unknown_envelope_field)
+POST {{proxy}}
+Content-Type: application/json
+
+{ "clientId": "customer.get", "url": "http://evil.example/", "json": { "urlId": 1 } }
+
+### Rejected: missing urlId (400)
+POST {{proxy}}
+Content-Type: application/json
+
+{ "clientId": "customer.get", "json": { "includeOrders": true } }
+
+### Rejected: unknown parameter (400)
+POST {{proxy}}
+Content-Type: application/json
+
+{ "clientId": "customer.get", "json": { "urlId": 1, "admin": true } }
+
+### Rejected: urlId must be an integer for customer.get (400)
+POST {{proxy}}
+Content-Type: application/json
+
+{ "clientId": "customer.get", "json": { "urlId": "../admin" } }
+
+### Rejected: customer.update requires an encrypted payload (400)
+POST {{proxy}}
+Content-Type: application/json
+
+{ "clientId": "customer.update", "json": { "urlId": 1, "email": "dana@example.com" } }
+
+### Rejected: AES-GCM tag does not authenticate the payload (400)
+POST {{proxy}}
+Content-Type: application/json
+
+{ "clientId": "customer.update", "encryptedJson": { "nonce": "AAAAAAAAAAAAAAAA", "ciphertext": "AAAA", "tag": "AAAAAAAAAAAAAAAAAAAAAA==" } }
+
+### Rejected: only POST is supported (405)
+GET {{proxy}}
+
+### Upstream 404 is passed through, marked X-Proxy-Response-Source: upstream
+POST {{proxy}}
+Content-Type: application/json
+
+{ "clientId": "customer.get", "json": { "urlId": 404 } }
+
+### Upstream 500 becomes 502 upstream_error; the upstream body (with internal details) is not returned
+POST {{proxy}}
+Content-Type: application/json
+
+{ "clientId": "customer.get", "json": { "urlId": 500 } }
+
+### Upstream timeout: the mock waits 10 s, the destination timeout is 5 s (504)
+POST {{proxy}}
+Content-Type: application/json
+
+{ "clientId": "customer.get", "json": { "urlId": 999 } }
