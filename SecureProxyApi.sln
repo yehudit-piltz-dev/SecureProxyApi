@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureProxy.Tests", "Secure
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureProxy.MockUpstream", "SecureProxy.MockUpstream\SecureProxy.MockUpstream.csproj", "{2B57096A-1BFB-4DB1-95CA-904ACB727E9A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureProxy.EncryptTool", "SecureProxy.EncryptTool\SecureProxy.EncryptTool.csproj", "{DDEF2A15-8534-4215-82FD-07BD1B38E0C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{2B57096A-1BFB-4DB1-95CA-904ACB727E9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2B57096A-1BFB-4DB1-95CA-904ACB727E9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2B57096A-1BFB-4DB1-95CA-904ACB727E9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDEF2A15-8534-4215-82FD-07BD1B38E0C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDEF2A15-8534-4215-82FD-07BD1B38E0C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDEF2A15-8534-4215-82FD-07BD1B38E0C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDEF2A15-8534-4215-82FD-07BD1B38E0C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

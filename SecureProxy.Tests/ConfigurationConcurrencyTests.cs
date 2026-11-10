@@ -102,6 +102,26 @@ public sealed class ConfigurationConcurrencyTests(ProxyTestFixture fixture) : Pr
     }
 
     [Fact]
+    public async Task History_of_new_entities_records_their_real_keys_and_enum_names()
+    {
+        // Regression for DEFECT-REPORT.md D2 and D3: history of added entities was captured before
+        // SaveChanges, with temporary keys, and enums were written as numbers.
+        var operation = await Fixture.CreateOperationAsync();
+
+        var ruleHistory = await Fixture.WithDbAsync(async db =>
+        {
+            var urlIdRuleId = await db.ParameterRules.Where(r => r.OperationId == operation.Id && r.Name == "urlId").Select(r => r.Id).SingleAsync();
+            return await db.ConfigurationChanges.AsNoTracking()
+                .SingleAsync(c => c.EntityType == "ParameterRule" && c.EntityKey == urlIdRuleId.ToString());
+        });
+
+        Assert.Equal(Api.Domain.ConfigurationChangeType.Added, ruleHistory.ChangeType);
+        Assert.Contains($"\"OperationId\":{{\"new\":{operation.Id}}}", ruleHistory.Changes);
+        Assert.Contains("\"Location\":{\"new\":\"Path\"}", ruleHistory.Changes);
+        Assert.Contains("\"DataType\":{\"new\":\"Integer\"}", ruleHistory.Changes);
+    }
+
+    [Fact]
     public async Task Admin_rejects_configuration_the_proxy_would_refuse_to_execute()
     {
         var operation = await Fixture.CreateOperationAsync();
