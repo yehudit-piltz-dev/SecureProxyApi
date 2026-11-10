@@ -14,7 +14,7 @@ public sealed class ConfigurationConcurrencyTests(ProxyTestFixture fixture) : Pr
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
-    // Brief 12.16: configuration concurrency conflicts are handled.
+    // Brief 9.16: configuration concurrency conflicts are handled.
     [Fact]
     public async Task Update_with_a_stale_version_returns_409_and_does_not_overwrite()
     {

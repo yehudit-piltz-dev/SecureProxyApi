@@ -6,7 +6,7 @@ namespace SecureProxy.Tests;
 
 public sealed class OperationPolicyTests(ProxyTestFixture fixture) : ProxyTestBase(fixture)
 {
-    // Brief 12.2: an unknown operation is rejected.
+    // Brief 9.2: an unknown operation is rejected.
     [Fact]
     public async Task Unknown_operation_is_rejected()
     {
@@ -27,7 +27,7 @@ public sealed class OperationPolicyTests(ProxyTestFixture fixture) : ProxyTestBa
         AssertNotForwarded();
     }
 
-    // Brief 12.3: a disabled operation is rejected.
+    // Brief 9.3: a disabled operation is rejected.
     [Fact]
     public async Task Disabled_operation_is_rejected()
     {
@@ -39,7 +39,7 @@ public sealed class OperationPolicyTests(ProxyTestFixture fixture) : ProxyTestBa
         AssertNotForwarded();
     }
 
-    // Brief 12.4: a disabled destination is rejected.
+    // Brief 9.4: a disabled destination is rejected.
     [Fact]
     public async Task Disabled_destination_is_rejected()
     {

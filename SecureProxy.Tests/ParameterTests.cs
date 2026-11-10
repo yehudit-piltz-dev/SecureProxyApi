@@ -6,7 +6,7 @@ namespace SecureProxy.Tests;
 
 public sealed class ParameterTests(ProxyTestFixture fixture) : ProxyTestBase(fixture)
 {
-    // Brief 12.7: missing required parameters are rejected.
+    // Brief 9.7: missing required parameters are rejected.
     [Fact]
     public async Task Missing_required_parameter_is_rejected()
     {
@@ -42,7 +42,7 @@ public sealed class ParameterTests(ProxyTestFixture fixture) : ProxyTestBase(fix
         AssertNotForwarded();
     }
 
-    // Brief 12.8: unknown parameters are handled according to the operation policy.
+    // Brief 9.8: unknown parameters are handled according to the operation policy.
     [Fact]
     public async Task Unknown_parameter_is_rejected_by_default()
     {
@@ -119,7 +119,7 @@ public sealed class ParameterTests(ProxyTestFixture fixture) : ProxyTestBase(fix
         AssertNotForwarded();
     }
 
-    // Brief 12.9: path traversal attempts are rejected.
+    // Brief 9.9: path traversal attempts are rejected.
     [Theory]
     [InlineData("..")]
     [InlineData(".")]

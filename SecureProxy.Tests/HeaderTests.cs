@@ -6,7 +6,7 @@ namespace SecureProxy.Tests;
 
 public sealed class HeaderTests(ProxyTestFixture fixture) : ProxyTestBase(fixture)
 {
-    // Brief 12.10: disallowed headers are not forwarded.
+    // Brief 9.10: disallowed headers are not forwarded.
     [Fact]
     public async Task Only_allowlisted_headers_are_forwarded()
     {

@@ -24,7 +24,7 @@ public sealed class EncryptionTests(ProxyTestFixture fixture) : ProxyTestBase(fi
         Assert.Equal("""{"email":"dana@example.com"}""", forwarded.Body);
     }
 
-    // Brief 12.11: invalid AES-GCM authentication tags are rejected.
+    // Brief 9.11: invalid AES-GCM authentication tags are rejected.
     [Fact]
     public async Task Invalid_authentication_tag_is_rejected()
     {
@@ -38,7 +38,7 @@ public sealed class EncryptionTests(ProxyTestFixture fixture) : ProxyTestBase(fi
         AssertNotForwarded();
     }
 
-    // Brief 12.12: invalid encrypted payloads are never forwarded.
+    // Brief 9.12: invalid encrypted payloads are never forwarded.
     [Fact]
     public async Task Tampered_ciphertext_is_rejected()
     {

@@ -11,7 +11,7 @@ namespace SecureProxy.Tests;
 /// </summary>
 public sealed class AuditTests(ProxyTestFixture fixture) : ProxyTestBase(fixture)
 {
-    // Brief 12.17: audit records are created for successful and rejected requests.
+    // Brief 9.17: audit records are created for successful and rejected requests.
     [Fact]
     public async Task Successful_request_is_audited()
     {

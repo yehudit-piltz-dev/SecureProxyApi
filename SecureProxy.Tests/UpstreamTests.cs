@@ -7,7 +7,7 @@ namespace SecureProxy.Tests;
 
 public sealed class UpstreamTests(ProxyTestFixture fixture) : ProxyTestBase(fixture)
 {
-    // Brief 12.13: upstream timeout is handled correctly.
+    // Brief 9.13: upstream timeout is handled correctly.
     [Fact]
     public async Task Upstream_timeout_returns_504_and_cancels_the_upstream_call()
     {
@@ -48,7 +48,7 @@ public sealed class UpstreamTests(ProxyTestFixture fixture) : ProxyTestBase(fixt
         AssertProxyError(result, HttpStatusCode.GatewayTimeout, "upstream_timeout");
     }
 
-    // Brief 12.14: upstream HTTP error responses are handled correctly.
+    // Brief 9.14: upstream HTTP error responses are handled correctly.
     [Theory]
     [InlineData(HttpStatusCode.BadRequest)]
     [InlineData(HttpStatusCode.NotFound)]
@@ -115,7 +115,7 @@ public sealed class UpstreamTests(ProxyTestFixture fixture) : ProxyTestBase(fixt
         AssertProxyError(result, HttpStatusCode.BadGateway, "upstream_response_too_large");
     }
 
-    // Brief 12.15: cancellation is propagated.
+    // Brief 9.15: cancellation is propagated.
     [Fact]
     public async Task Caller_cancellation_is_propagated_to_the_upstream_call()
     {

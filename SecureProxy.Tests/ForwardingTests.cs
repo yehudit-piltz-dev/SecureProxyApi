@@ -6,7 +6,7 @@ namespace SecureProxy.Tests;
 
 public sealed class ForwardingTests(ProxyTestFixture fixture) : ProxyTestBase(fixture)
 {
-    // Brief 12.1: a valid configured operation is forwarded.
+    // Brief 9.1: a valid configured operation is forwarded.
     [Fact]
     public async Task Valid_operation_is_forwarded_to_the_configured_destination()
     {
@@ -45,7 +45,7 @@ public sealed class ForwardingTests(ProxyTestFixture fixture) : ProxyTestBase(fi
         Assert.StartsWith("application/json", forwarded.Headers["Content-Type"]);
     }
 
-    // Brief 12.5: a caller-supplied destination URL cannot override configuration.
+    // Brief 9.5: a caller-supplied destination URL cannot override configuration.
     [Theory]
     [InlineData("url", "\"https://evil.test/steal\"")]
     [InlineData("destinationUrl", "\"https://evil.test/steal\"")]
@@ -88,7 +88,7 @@ public sealed class ForwardingTests(ProxyTestFixture fixture) : ProxyTestBase(fi
         Assert.Equal("?name=x%26host%3Devil.test%23https%3A%2F%2Fevil.test%2F", forwarded.Uri.Query);
     }
 
-    // Brief 12.6: an invalid or disallowed HTTP method is rejected.
+    // Brief 9.6: an invalid or disallowed HTTP method is rejected.
     [Theory]
     [InlineData("GET")]
     [InlineData("PUT")]
