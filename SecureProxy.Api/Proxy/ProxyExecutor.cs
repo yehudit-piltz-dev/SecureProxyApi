@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SecureProxy.Api.Audit;
 using SecureProxy.Api.Configuration;
 using SecureProxy.Api.Domain;
+using SecureProxy.Api.Infrastructure;
 using SecureProxy.Api.Security;
 
 namespace SecureProxy.Api.Proxy;
@@ -20,6 +21,7 @@ public sealed class ProxyExecutor(
     PayloadDecryptor decryptor,
     UpstreamForwarder forwarder,
     RequestAuditor auditor,
+    DestinationConcurrencyLimiter concurrencyLimiter,
     TimeProvider timeProvider,
     ILogger<ProxyExecutor> logger)
 {
@@ -147,6 +149,14 @@ public sealed class ProxyExecutor(
 
             // 4. Build the upstream request from trusted configuration, audit it, then forward it.
             using var request = UpstreamRequestFactory.Create(operation, validated, context.Request.Headers, context.TraceIdentifier);
+
+            // Held until the response has been streamed, so it bounds requests in flight per destination.
+            using var lease = concurrencyLimiter.TryAcquire(operation.Destination.Id);
+            if (!lease.IsAcquired)
+            {
+                throw new ProxyException(ProxyError.DestinationBusy);
+            }
+
             await auditor.RecordForwardingAsync(audit);
             await forwarder.ForwardAsync(context, operation, request, audit);
         }

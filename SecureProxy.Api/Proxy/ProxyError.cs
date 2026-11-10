@@ -43,6 +43,7 @@ public sealed record ProxyError(string Code, int StatusCode, string Title, Execu
     public static readonly ProxyError ConfigurationUnavailable = Rejected("configuration_unavailable", 503, "The proxy configuration is temporarily unavailable.");
     public static readonly ProxyError AuditUnavailable = Rejected("audit_unavailable", 503, "The request cannot be audited and was not forwarded.");
     public static readonly ProxyError RateLimited = Rejected("rate_limited", 429, "Too many requests.");
+    public static readonly ProxyError DestinationBusy = Rejected("destination_busy", 503, "The destination is handling too many requests. Retry later.");
     public static readonly ProxyError InternalError = new("internal_error", 500, "An unexpected error occurred.", ExecutionOutcome.ProxyError);
     public static readonly ProxyError CallerCancelled = new("caller_cancelled", ClientClosedRequest, "The caller cancelled the request.", ExecutionOutcome.CallerCancelled);
 

@@ -103,19 +103,9 @@ public static partial class OperationSnapshotFactory
             return null;
         }
 
-        Uri? baseUri = null;
-        if (Uri.TryCreate(destination.BaseUrl, UriKind.Absolute, out var parsed)
-            && (parsed.Scheme == Uri.UriSchemeHttps || parsed.Scheme == Uri.UriSchemeHttp)
-            && string.IsNullOrEmpty(parsed.UserInfo)
-            && string.IsNullOrEmpty(parsed.Query)
-            && string.IsNullOrEmpty(parsed.Fragment))
+        if (!TryNormalizeBaseUrl(destination.BaseUrl, out var baseUri))
         {
-            // A trailing slash makes relative paths append to the base path instead of replacing its last segment.
-            baseUri = parsed.AbsoluteUri.EndsWith('/') ? parsed : new Uri(parsed.AbsoluteUri + "/");
-        }
-        else
-        {
-            errors.Add("Destination base URL must be an absolute http(s) URL without credentials, query or fragment.");
+            errors.Add(InvalidBaseUrlMessage);
         }
 
         return new DestinationSnapshot(
@@ -124,6 +114,27 @@ public static partial class OperationSnapshotFactory
             destination.IsEnabled,
             baseUri,
             TimeSpan.FromMilliseconds(Math.Max(destination.TimeoutMs, 1)));
+    }
+
+    public const string InvalidBaseUrlMessage =
+        "Destination base URL must be an absolute http(s) URL without credentials, query or fragment.";
+
+    /// <summary>Checks a destination base URL and returns it with a trailing slash.</summary>
+    public static bool TryNormalizeBaseUrl(string baseUrl, out Uri? baseUri)
+    {
+        baseUri = null;
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var parsed)
+            || (parsed.Scheme != Uri.UriSchemeHttps && parsed.Scheme != Uri.UriSchemeHttp)
+            || !string.IsNullOrEmpty(parsed.UserInfo)
+            || !string.IsNullOrEmpty(parsed.Query)
+            || !string.IsNullOrEmpty(parsed.Fragment))
+        {
+            return false;
+        }
+
+        // A trailing slash makes relative paths append to the base path instead of replacing its last segment.
+        baseUri = parsed.AbsoluteUri.EndsWith('/') ? parsed : new Uri(parsed.AbsoluteUri + "/");
+        return true;
     }
 
     private static Dictionary<string, ParameterRuleSnapshot> CreateParameters(IEnumerable<ParameterRule> rules, List<string> errors)

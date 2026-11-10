@@ -81,3 +81,38 @@ POST {{proxy}}
 Content-Type: application/json
 
 { "clientId": "customer.get", "json": { "urlId": 999 } }
+
+### ---------------------------------------------------------------------------------------------
+### Admin API. Set @adminKey to the local key: dotnet user-secrets list --project SecureProxy.Api
+@admin = http://localhost:5232/api/admin
+@adminKey = paste-the-Admin:ApiKey-value-here
+
+### Read operation 1. Copy the ETag response header for the update below.
+GET {{admin}}/operations/1
+X-Admin-Key: {{adminKey}}
+
+### Disable operation 1. If-Match must be the ETag you read; a stale ETag returns 409 Conflict.
+# After this, the proxy rejects customer.get immediately (403 operation_disabled) on this instance.
+PUT {{admin}}/operations/1
+X-Admin-Key: {{adminKey}}
+If-Match: "paste-the-ETag-here"
+Content-Type: application/json
+
+{
+  "key": "customer.get", "destinationId": 1, "httpMethod": "GET", "pathTemplate": "customers/{urlId}",
+  "isEnabled": false, "maxRequestBytes": 4096, "maxResponseBytes": 262144, "timeoutMs": null,
+  "requiresEncryption": false, "encryptionProfileId": null, "allowUnknownParameters": false,
+  "parameterRules": [
+    { "name": "urlId", "location": "Path", "isRequired": true, "dataType": "Integer", "minValue": 1, "maxValue": 2147483647 },
+    { "name": "includeOrders", "location": "Query", "isRequired": false, "dataType": "Boolean" }
+  ],
+  "headerRules": [ { "headerName": "Accept-Language", "allowSensitive": false } ]
+}
+
+### Configuration history of operation 1: who changed what, and when
+GET {{admin}}/configuration-changes?entityType=Operation&entityKey=1
+X-Admin-Key: {{adminKey}}
+
+### Audit records of the latest proxy requests
+GET {{admin}}/request-logs?take=20
+X-Admin-Key: {{adminKey}}
