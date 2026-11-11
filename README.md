@@ -30,7 +30,7 @@ is forwarded as `GET http://localhost:5240/customers/42?includeOrders=true`.
 
 ## Prerequisites
 
-- **.NET 8 SDK** 8.0.400 or later 8.0 feature band (`global.json` pins `8.0.427` with `latestFeature` roll-forward).
+- **.NET 8 SDK**, any version from 8.0.100 (`global.json` selects the newest .NET 8 SDK installed).
 - **SQL Server**: SQL Server Express **LocalDB** (installed with Visual Studio's "ASP.NET and web development"
   workload) is the default. Any SQL Server works; see [Using another SQL Server](#using-another-sql-server).
 - Optional: **Visual Studio 2022** 17.9 or later.

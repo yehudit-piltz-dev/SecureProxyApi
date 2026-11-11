@@ -234,7 +234,7 @@ sending it again can process it twice, and the proxy cannot tell whether that is
 Which failures could be retried safely, if retries were added:
 - Failures where the request certainly did not reach the destination (DNS failure, connection refused),
   for any method.
-- Timeouts, 502/503/504 and connection resets for **idempotent** operations only (GET, HEAD, PUT, DELETE by HTTP
+- Timeouts, 502/503/504 and connection resets for **idempotent** operations only (GET, PUT, DELETE by HTTP
   semantics), and only if the destination honours those semantics. This would be an explicit `IsIdempotent`
   flag on the operation rather than an inference from the method.
 - Never for POST or PATCH, unless deduplication is in place.
