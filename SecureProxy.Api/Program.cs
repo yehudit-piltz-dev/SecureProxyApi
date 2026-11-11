@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using SecureProxy.Api.Admin;
@@ -33,6 +34,8 @@ builder.Services.AddScoped<RequestAuditor>();
 builder.Services.AddScoped<UpstreamForwarder>();
 builder.Services.AddScoped<ProxyExecutor>();
 builder.Services.AddProxyRateLimiting();
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>("database", tags: [DatabaseHealthCheck.ReadyTag]);
 
 builder.Services.AddHttpClient(UpstreamForwarder.HttpClientName, client =>
     {
@@ -124,6 +127,13 @@ app.MapMethods(ProxyRoute, ["GET", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
     .ExcludeFromDescription();
 
 app.MapAdminEndpoints();
+
+// Liveness: the process is running (no dependencies checked, so a database outage does not restart it).
+// Readiness: the instance can serve requests, which needs SQL Server. Responses contain only the status.
+// Meant for load balancers and monitoring; in production they are exposed on the internal network only.
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false }).WithTags("Health");
+app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains(DatabaseHealthCheck.ReadyTag) })
+    .WithTags("Health");
 
 app.Run();
 
