@@ -2,8 +2,8 @@
 
 ## Context
 
-No existing codebase was supplied: the company confirmed that the solution is built from scratch, starting
-from the standard Visual Studio Web API template.
+No existing codebase was supplied with the brief, so the solution was built from scratch, starting from the
+standard Visual Studio Web API template.
 
 So this report lists the defects I **found and fixed while building the solution**: in the template and in
 earlier versions of my own code. They came up while running the application, checking its output, and in

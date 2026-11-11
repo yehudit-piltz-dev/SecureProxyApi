@@ -41,7 +41,7 @@ No other envelope field is accepted, so a caller has no way to send a URL, HTTP 
 
 ### Defect report
 
-No existing repository was supplied; the company confirmed that the solution is built from scratch.
+No existing repository was supplied with the brief, so the solution was built from scratch.
 `DEFECT-REPORT.md` therefore lists the defects I found and fixed while building it.
 
 ## 2. Architecture
