@@ -1,5 +1,7 @@
 # Enterprise Secure Proxy Web API
 
+[![CI](https://github.com/yehudit-piltz-dev/SecureProxyApi/actions/workflows/ci.yml/badge.svg)](https://github.com/yehudit-piltz-dev/SecureProxyApi/actions/workflows/ci.yml)
+
 A backend-only ASP.NET Core 8 Web API that forwards **only explicitly configured operations** to predefined
 destination APIs. A caller names an operation by its key; the destination, HTTP method, path, allowed
 parameters and headers all come from configuration stored in SQL Server, and a request that fails any check
@@ -12,6 +14,22 @@ Content-Type: application/json
 { "clientId": "customer.get", "json": { "urlId": 42, "includeOrders": true } }
 ```
 is forwarded as `GET http://localhost:5240/customers/42?includeOrders=true`.
+
+## How a request is processed
+
+Every check runs before anything is sent to the destination; a request that fails any of them gets a problem
+response and is never forwarded. Details in [DESIGN-NOTES.md](DESIGN-NOTES.md#3-request-processing-sequence).
+
+```mermaid
+flowchart LR
+    caller(["Caller"]) -->|"POST /api/proxy/execute"| envelope["Envelope<br/>POST, JSON, size, allowed fields"]
+    envelope --> lookup["Operation<br/>exists, enabled, destination enabled"]
+    lookup --> decrypt["Decryption<br/>AES-256-GCM if required"]
+    decrypt --> params["Parameters<br/>urlId, rules, path safety"]
+    params --> audit[("Audit record")]
+    audit --> destination[["Destination API<br/>method and path from configuration"]]
+    envelope & lookup & decrypt & params -. reject .-> problem["Problem response<br/>nothing forwarded"]
+```
 
 | Document | Content |
 |---|---|
@@ -98,6 +116,9 @@ dotnet run --project SecureProxy.Api --launch-profile http         # http://loca
 
 Swagger UI: <http://localhost:5232/swagger>. Use **Authorize** with the admin key for the admin endpoints.
 
+Health endpoints: `GET /health/live` (the process is running) and `GET /health/ready` (SQL Server is reachable;
+503 otherwise).
+
 ### Trying it
 `SecureProxy.Api/SecureProxy.Api.http` contains ready-made requests (valid, rejected, upstream errors,
 timeout, admin API) for the Visual Studio / VS Code HTTP client. The mock upstream echoes what it received,
@@ -143,6 +164,10 @@ dotnet test
 ```
 For running the API against another server, set `ConnectionStrings__ProxyDatabase`.
 
+### Continuous integration
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds the solution and runs all tests against a SQL Server
+2022 container on every push and pull request. The badge at the top of this page shows the latest result.
+
 ### Coverage of the required scenarios (brief section 9)
 
 | # | Scenario | Tests |
@@ -164,6 +189,10 @@ For running the API against another server, set `ConnectionStrings__ProxyDatabas
 | 15 | Cancellation is propagated | `UpstreamTests.Caller_cancellation_is_propagated_to_the_upstream_call` |
 | 16 | Configuration concurrency conflicts are handled | `ConfigurationConcurrencyTests.Update_with_a_stale_version_returns_409_and_does_not_overwrite`, `Rules_only_change_also_requires_the_current_version`, `Rowversion_rejects_a_concurrent_write_at_the_database_level` |
 | 17 | Audit records for successful and rejected requests | `AuditTests` (success, rejected, unknown operation, malformed request, no sensitive data stored) |
+
+Beyond the required scenarios: envelope and size limits (`EnvelopeTests`), configuration validation and caching
+(`Unit/`), health checks (`HealthTests`), and fail-closed behaviour when SQL Server is unreachable
+(`DatabaseUnavailableTests`).
 
 ## Configuration reference
 

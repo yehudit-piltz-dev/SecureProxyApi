@@ -49,6 +49,24 @@ No existing repository was supplied with the brief, so the solution was built fr
 A single ASP.NET Core 8 Web API (minimal APIs), one SQL Server database through EF Core 8, and `IHttpClientFactory` for
 upstream calls.
 
+```mermaid
+flowchart LR
+    callers(["Calling systems"]) -->|"POST /api/proxy/execute"| proxy
+    admins(["Administrators"]) -->|"/api/admin + X-Admin-Key"| admin
+    subgraph api["SecureProxy.Api"]
+        proxy["Proxy pipeline"]
+        admin["Admin API"]
+        cache["Configuration cache"]
+    end
+    proxy --> cache
+    cache -->|"load operations"| db[("SQL Server<br/>configuration, audit, history")]
+    proxy -->|"audit records"| db
+    admin -->|"updates with rowversion"| db
+    admin -. invalidate on write .-> cache
+    proxy -->|"configured method and path only"| upstream[["Destination APIs"]]
+    proxy -->|"key by reference"| keys["Key source<br/>user secrets / secret manager"]
+```
+
 | Folder (`SecureProxy.Api`) | Responsibility |
 |---|---|
 | `Domain/` | Entities: `Destination`, `Operation`, `ParameterRule`, `HeaderRule`, `EncryptionProfile`, `OperationalSetting`, `RequestLog`, `ConfigurationChange` |
@@ -74,6 +92,26 @@ are where I would split it if the proxy grew.
 
 `ProxyExecutor.ExecuteAsync` (`Proxy/ProxyExecutor.cs`) runs every request through these steps, in order.
 Each check throws a `ProxyException` with a stable error code; nothing after the failing step runs.
+
+```mermaid
+flowchart TD
+    caller(["Caller"]) -->|"POST /api/proxy/execute"| envelope["1-2 · Method and envelope<br/>POST only, JSON, size, allowed fields"]
+    envelope --> lookup["3 · Operation lookup<br/>exists, enabled, destination enabled, valid configuration"]
+    lookup --> decrypt["4 · Decryption<br/>AES-256-GCM, when the operation requires it"]
+    decrypt --> params["5 · Parameter validation<br/>urlId, required, types, ranges, path safety"]
+    params --> build["6 · Upstream request<br/>built from configuration only"]
+    build --> permit["7 · Per-destination concurrency permit"]
+    permit --> audit[("8 · Audit record<br/>written before forwarding")]
+    audit --> destination[["9 · Destination API<br/>configured timeout, caller cancellation"]]
+    destination -->|"response streamed back, size-limited"| caller
+
+    envelope -. reject .-> problem["Problem response<br/>X-Proxy-Response-Source: proxy<br/>nothing is forwarded"]
+    lookup -. reject .-> problem
+    decrypt -. reject .-> problem
+    params -. reject .-> problem
+    permit -. busy .-> problem
+    audit -. audit failed .-> problem
+```
 
 | # | Step | Code |
 |---|---|---|
@@ -314,12 +352,21 @@ record and added to the logging scope of every log entry of the request.
 - The pre-forwarding audit write fails: the request is **not** forwarded (503 `audit_unavailable`).
 - A best-effort write fails (final outcome, rejected request): the full record is written to the structured
   log instead, so log aggregation still has it.
+- `/health/ready` reports the instance as not ready (see Health checks below).
 
 The consequence is that the proxy is only as available as SQL Server. I chose this on purpose: for a
 security gateway, "every forwarded request is audited" matters more than staying up during a database outage.
 The alternative is to buffer audit records (in memory or a local outbox) and forward anyway. The proxy then
 keeps working while the database is down, but records are lost if the process dies before they are written.
 That trade-off could be made per operation, for operations where availability matters more than the audit trail.
+
+### Health checks
+- `GET /health/live` (liveness) reports that the process is running. It checks no dependencies, so an
+  orchestrator does not restart a healthy process just because the database is down.
+- `GET /health/ready` (readiness) also checks that SQL Server is reachable. When it is not, the instance
+  reports 503, so a load balancer stops sending it traffic instead of every request failing with 503.
+- Both return only `Healthy` or `Unhealthy`, never exception messages or server names. In production they
+  are exposed on the internal network only.
 
 ### Logging
 Structured logging through `ILogger` with message templates. One summary line per request (outcome,
@@ -342,7 +389,11 @@ exposes the history at `GET /api/admin/configuration-changes`.
   concurrency and the case-insensitive collation behave differently on in-memory providers.
 - Every destination is replaced by a recording handler. **Every rejection test asserts that the destination
   received nothing**, as the brief requires, not only the status code.
+- A separate test host points the API at a SQL Server address where nothing listens, to check the
+  fail-closed behaviour of section 8: 503 `configuration_unavailable`, nothing forwarded, readiness unhealthy.
 - Unit tests cover configuration validation and the cache's invalidation behaviour.
+- GitHub Actions (`.github/workflows/ci.yml`) builds the solution and runs every test against SQL Server 2022
+  on each push, so the result of the test suite is visible without running it locally.
 - `README.md` maps each scenario of section 9 to its tests.
 
 ## 11. Scope decisions and known limitations
